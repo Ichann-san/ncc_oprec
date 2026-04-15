@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+venv/
+antenv/
+.env
+
+# Model files (use Git LFS or download separately)
+*.onnx
+*.onnx.data
+
+# Chrome Extension build artifacts
+extension.pem
+extension.crx
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

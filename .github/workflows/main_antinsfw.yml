@@ -1,0 +1,86 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
+
+name: Build and deploy Python app to Azure Web App - antinsfw
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'meet_1/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python version
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # 🛠️ Local Build Section (Optional)
+      # Validates dependencies before deployment. Remove if it slows CI.
+      - name: Create and Start virtual environment and Install dependencies
+        working-directory: meet_1
+        run: |
+          python -m venv antenv
+          source antenv/bin/activate
+          pip install -r requirements.txt
+                
+      # Upload only the meet_1/ directory contents as the deployment artifact.
+      # Oryx will handle pip install on Azure (SCM_DO_BUILD_DURING_DEPLOYMENT=true).
+      - name: Upload artifact for deployment jobs
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-app
+          path: |
+            meet_1/
+            !meet_1/antenv/
+            !meet_1/.gitignore
+            !meet_1/extension/
+            !meet_1/extension.crx
+            !meet_1/extension.pem
+            !meet_1/DOCKER_VPS_GUIDE.md
+            !meet_1/antinude.ipynb
+
+      # 🚫 Opting Out of Oryx Build
+      # If you prefer to disable the Oryx build process during deployment, follow these steps:
+      # 1. Remove the SCM_DO_BUILD_DURING_DEPLOYMENT app setting from your Azure App Service Environment variables.
+      # 2. Refer to sample workflows for alternative deployment strategies: https://github.com/Azure/actions-workflow-samples/tree/master/AppService
+      
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: python-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_33F92ECD391E43C2A61DCD54F028F9A6 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_108E3F168B74488BAEB115F71175505C }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_AEDCE82E984D4A88ADD04BEE19BF49E6 }}
+
+      - name: 'Deploy to Azure Web App'
+        uses: azure/webapps-deploy@v3
+        id: deploy-to-webapp
+        with:
+          app-name: 'antinsfw'
+          slot-name: 'Production'
+          package: meet_1/
